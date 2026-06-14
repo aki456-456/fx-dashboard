@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FXファンダ デイリーダッシュボード</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>FXファンダ デイリーダッシュボード</h1>
+  <div class="date-nav">
+    <input type="date" id="date-picker">
+    <button id="today-btn" type="button">今日</button>
+  </div>
+</header>
+
+<main>
+
+  <!-- ============ 市場データ（自動） ============ -->
+  <section class="market-data">
+    <h2>市場データ（自動）</h2>
+
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
+      {
+        "symbols": [
+          {"description": "USD/JPY", "proName": "FX:USDJPY"},
+          {"description": "EUR/USD", "proName": "FX:EURUSD"},
+          {"description": "GBP/USD", "proName": "FX:GBPUSD"},
+          {"description": "AUD/USD", "proName": "FX:AUDUSD"},
+          {"description": "NZD/USD", "proName": "FX:NZDUSD"},
+          {"description": "USD/CAD", "proName": "FX:USDCAD"},
+          {"description": "USD/CHF", "proName": "FX:USDCHF"}
+        ],
+        "showSymbolLogo": true,
+        "isTransparent": false,
+        "displayMode": "adaptive",
+        "colorTheme": "dark",
+        "locale": "ja"
+      }
+      </script>
+    </div>
+
+    <div class="widget-grid">
+      <div class="tradingview-widget-container">
+        <div class="tradingview-widget-container__widget"></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+        {
+          "symbol": "FX:USDJPY",
+          "width": "100%",
+          "height": 220,
+          "locale": "ja",
+          "dateRange": "5D",
+          "colorTheme": "dark",
+          "isTransparent": true,
+          "autosize": false
+        }
+        </script>
+      </div>
+      <div class="tradingview-widget-container">
+        <div class="tradingview-widget-container__widget"></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js" async>
+        {
+          "symbol": "FX:EURUSD",
+          "width": "100%",
+          "height": 220,
+          "locale": "ja",
+          "dateRange": "5D",
+          "colorTheme": "dark",
+          "isTransparent": true,
+          "autosize": false
+        }
+        </script>
+      </div>
+    </div>
+
+    <p class="hint">
+      DXY・米10年債利回り・VIX・S&amp;P500・日経225はTradingViewの埋め込み制限により表示できないため、下のリンクから直接確認してください。
+    </p>
+    <div class="link-grid">
+      <a class="ext-link" href="https://www.tradingview.com/symbols/TVC-DXY/" target="_blank" rel="noopener">DXY（ドル指数）</a>
+      <a class="ext-link" href="https://www.tradingview.com/symbols/TVC-US10Y/" target="_blank" rel="noopener">米10年債利回り</a>
+      <a class="ext-link" href="https://www.tradingview.com/symbols/TVC-VIX/" target="_blank" rel="noopener">VIX指数</a>
+      <a class="ext-link" href="https://www.tradingview.com/symbols/SPX/" target="_blank" rel="noopener">S&amp;P500</a>
+      <a class="ext-link" href="https://www.tradingview.com/symbols/TVC-NI225/" target="_blank" rel="noopener">日経225</a>
+    </div>
+
+    <details>
+      <summary>経済指標カレンダー</summary>
+      <div class="tradingview-widget-container">
+        <div class="tradingview-widget-container__widget"></div>
+        <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-events.js" async>
+        {
+          "colorTheme": "dark",
+          "isTransparent": false,
+          "width": "100%",
+          "height": 500,
+          "locale": "ja",
+          "importanceFilter": "0,1",
+          "currencyFilter": "USD,JPY,EUR,GBP,AUD,NZD,CAD,CHF"
+        }
+        </script>
+      </div>
+    </details>
+  </section>
+
+  <!-- ============ デイリーチェック（手入力） ============ -->
+  <section class="checklist">
+    <h2>デイリーチェック（手入力）</h2>
+    <p class="hint">各項目の考え方は Obsidian の「FXファンダ_方向感フレームワーク」を参照。</p>
+
+    <form id="checklist-form">
+
+      <details open>
+        <summary>1. ドル全体の流れ</summary>
+        <label>リスク姿勢
+          <select name="risk_sentiment">
+            <option value="">--</option>
+            <option value="on">リスクオン</option>
+            <option value="off">リスクオフ</option>
+            <option value="neutral">中立</option>
+          </select>
+        </label>
+        <label>メモ（DXY・米10年債利回り・米株の見た所感）
+          <textarea name="usd_flow_memo" rows="3"></textarea>
+        </label>
+      </details>
+
+      <details>
+        <summary>2. 相手通貨側の流れ</summary>
+        <label>中銀スタンス・関連市場メモ
+          <textarea name="counter_flow_memo" rows="3"></textarea>
+        </label>
+      </details>
+
+      <details>
+        <summary>3. 金利差の方向性</summary>
+        <label>直近の変化
+          <select name="rate_diff_change">
+            <option value="">--</option>
+            <option value="widen">拡大</option>
+            <option value="narrow">縮小</option>
+            <option value="flat">不変</option>
+          </select>
+        </label>
+        <label>中銀トーンの変化
+          <select name="cb_tone_change">
+            <option value="">--</option>
+            <option value="hawkish">タカ派寄り</option>
+            <option value="dovish">ハト派寄り</option>
+            <option value="flat">不変</option>
+          </select>
+        </label>
+        <label>メモ
+          <textarea name="rate_diff_memo" rows="2"></textarea>
+        </label>
+      </details>
+
+      <details>
+        <summary>4. 経済サプライズの傾向</summary>
+        <label>ドル側
+          <select name="surprise_usd">
+            <option value="">--</option>
+            <option value="strong">強い（上振れ傾向）</option>
+            <option value="weak">弱い（下振れ傾向）</option>
+            <option value="mixed">混在</option>
+          </select>
+        </label>
+        <label>相手通貨側
+          <select name="surprise_counter">
+            <option value="">--</option>
+            <option value="strong">強い（上振れ傾向）</option>
+            <option value="weak">弱い（下振れ傾向）</option>
+            <option value="mixed">混在</option>
+          </select>
+        </label>
+        <label>メモ
+          <textarea name="surprise_memo" rows="2"></textarea>
+        </label>
+      </details>
+
+      <details>
+        <summary>5. 本日のイベント・指標</summary>
+        <div class="table-scroll">
+          <table id="events-table">
+            <thead>
+              <tr>
+                <th>時間(JST)</th><th>指標/イベント</th><th>予想</th><th>前回</th><th>上振れた場合</th><th>下振れた場合</th><th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <button type="button" id="add-event-row">+ 行を追加</button>
+      </details>
+
+      <details>
+        <summary>通貨強弱マトリクス</summary>
+        <div class="table-scroll">
+          <table id="strength-matrix">
+            <thead>
+              <tr><th>通貨</th><th>金融政策</th><th>経済データ</th><th>リスク相性</th><th>合計</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </details>
+
+      <details open>
+        <summary>今日のシナリオ</summary>
+        <label>バイアス
+          <textarea name="scenario_bias" rows="2"></textarea>
+        </label>
+        <label>根拠
+          <textarea name="scenario_reason" rows="2"></textarea>
+        </label>
+        <label>崩れる条件
+          <textarea name="scenario_breakdown" rows="2"></textarea>
+        </label>
+      </details>
+
+    </form>
+
+    <div class="actions">
+      <button type="button" id="export-btn">Markdownをコピー</button>
+      <span id="save-status"></span>
+    </div>
+  </section>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
