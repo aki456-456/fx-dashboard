@@ -67,6 +67,16 @@ h2 {
   margin-top: -4px;
 }
 
+.notice {
+  background: rgba(79, 140, 255, 0.12);
+  border: 1px solid var(--accent);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  margin: 8px 0 0;
+}
+
 .widget-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));

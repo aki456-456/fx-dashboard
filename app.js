@@ -14,6 +14,7 @@ const addEventRowBtn = document.getElementById("add-event-row");
 const strengthBody = document.querySelector("#strength-matrix tbody");
 const exportBtn = document.getElementById("export-btn");
 const saveStatus = document.getElementById("save-status");
+const dataSourceNotice = document.getElementById("data-source-notice");
 
 function todayStr() {
   const d = new Date();
@@ -159,16 +160,39 @@ function populateForm(data = {}) {
   buildStrengthMatrix(data);
 }
 
-function loadDate(dateStr) {
+async function loadDate(dateStr) {
   datePicker.value = dateStr;
   const raw = localStorage.getItem(storageKey(dateStr));
-  const data = raw ? JSON.parse(raw) : {};
-  populateForm(data);
-  saveStatus.textContent = raw ? "保存済みデータを読み込みました" : "新規（未保存）";
+  if (raw) {
+    populateForm(JSON.parse(raw));
+    saveStatus.textContent = "保存済みデータを読み込みました";
+    dataSourceNotice.hidden = true;
+    return;
+  }
+
+  try {
+    const res = await fetch(`data/${dateStr}.json`);
+    if (res.ok) {
+      const data = await res.json();
+      populateForm(data);
+      saveStatus.textContent = "新規（未保存）";
+      dataSourceNotice.hidden = false;
+      dataSourceNotice.textContent =
+        "AIが下調べした「たたき台」を表示しています。内容を確認・編集して、自分の判断で確定させてください。編集すると自動保存されます。";
+      return;
+    }
+  } catch (e) {
+    // データファイルがない場合は無視して空フォームを表示
+  }
+
+  populateForm({});
+  saveStatus.textContent = "新規（未保存）";
+  dataSourceNotice.hidden = true;
 }
 
 let saveTimer = null;
 function saveCurrentData() {
+  dataSourceNotice.hidden = true;
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => {
     const dateStr = datePicker.value || todayStr();
