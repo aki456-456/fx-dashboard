@@ -15,6 +15,7 @@ const strengthBody = document.querySelector("#strength-matrix tbody");
 const exportBtn = document.getElementById("export-btn");
 const saveStatus = document.getElementById("save-status");
 const dataSourceNotice = document.getElementById("data-source-notice");
+const strengthSuggestion = document.getElementById("strength-suggestion");
 
 function todayStr() {
   const d = new Date();
@@ -81,6 +82,7 @@ function createStrengthRow(currency, rowData = {}) {
     select.value = rowData[f] || "";
     select.addEventListener("change", () => {
       recalcTotal(tr);
+      updateStrengthSuggestion();
       saveCurrentData();
     });
     td.appendChild(select);
@@ -106,12 +108,38 @@ function recalcTotal(tr) {
   tr.querySelector(".total-cell").textContent = total;
 }
 
+function updateStrengthSuggestion() {
+  const totals = [];
+  strengthBody.querySelectorAll("tr").forEach((tr) => {
+    const total = parseInt(tr.querySelector(".total-cell").textContent, 10) || 0;
+    totals.push({ currency: tr.dataset.currency, total });
+  });
+
+  const allZero = totals.every((t) => t.total === 0);
+  if (allZero) {
+    strengthSuggestion.hidden = true;
+    return;
+  }
+
+  const max = Math.max(...totals.map((t) => t.total));
+  const min = Math.min(...totals.map((t) => t.total));
+  const strong = totals.filter((t) => t.total === max).map((t) => t.currency);
+  const weak = totals.filter((t) => t.total === min).map((t) => t.currency);
+
+  strengthSuggestion.hidden = false;
+  strengthSuggestion.innerHTML =
+    `<strong>本日の強弱:</strong> 強い ＝ ${strong.join("・")}（${max >= 0 ? "+" + max : max}） / ` +
+    `弱い ＝ ${weak.join("・")}（${min >= 0 ? "+" + min : min}）<br>` +
+    `→ 強い通貨を買い・弱い通貨を売る組み合わせ（例：${strong[0]}/${weak[0]} や ${weak[0]}/${strong[0]}）が、本日トレンドが出やすいペアの目安です。`;
+}
+
 function buildStrengthMatrix(data = {}) {
   strengthBody.innerHTML = "";
   for (const cur of CURRENCIES) {
     const rowData = (data.strength && data.strength[cur]) || {};
     strengthBody.appendChild(createStrengthRow(cur, rowData));
   }
+  updateStrengthSuggestion();
 }
 
 function buildEventsTable(events = []) {

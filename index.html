@@ -199,6 +199,13 @@
 
       <details>
         <summary>通貨強弱マトリクス</summary>
+        <p class="hint">
+          各通貨について3つの軸を+1（プラス材料）/0（中立）/-1（マイナス材料）で評価します。<br>
+          ・金融政策：中銀がタカ派寄り(+1)かハト派寄り(-1)か<br>
+          ・経済データ：最近の指標が強い(+1)か弱い(-1)か<br>
+          ・リスク相性：今日のリスク姿勢（オン/オフ）でこの通貨が買われやすい(+1)か売られやすい(-1)か<br>
+          合計が高い通貨ほど「相対的に強い」、低い通貨ほど「相対的に弱い」。<strong>強い通貨を買い・弱い通貨を売る</strong>組み合わせが、最もトレンドが出やすいペアの目安になります。
+        </p>
         <div class="table-scroll">
           <table id="strength-matrix">
             <thead>
@@ -207,6 +214,7 @@
             <tbody></tbody>
           </table>
         </div>
+        <p id="strength-suggestion" class="notice" hidden></p>
       </details>
 
       <details open>
