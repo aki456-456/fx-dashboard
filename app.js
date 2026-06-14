@@ -1,21 +1,28 @@
 const CURRENCIES = ["USD", "JPY", "EUR", "GBP", "AUD", "NZD", "CAD", "CHF"];
-const SCORE_OPTIONS = [
-  { value: "", label: "--" },
-  { value: "1", label: "+1" },
-  { value: "0", label: "0" },
-  { value: "-1", label: "-1" },
-];
 
-const form = document.getElementById("checklist-form");
 const datePicker = document.getElementById("date-picker");
 const todayBtn = document.getElementById("today-btn");
+const noDataNotice = document.getElementById("no-data-notice");
+const checklistContent = document.getElementById("checklist-content");
+
+const riskSentiment = document.getElementById("risk-sentiment");
+const usdFlowMemo = document.getElementById("usd-flow-memo");
+const counterFlowMemo = document.getElementById("counter-flow-memo");
+const rateDiffChange = document.getElementById("rate-diff-change");
+const cbToneChange = document.getElementById("cb-tone-change");
+const rateDiffMemo = document.getElementById("rate-diff-memo");
+const surpriseUsd = document.getElementById("surprise-usd");
+const surpriseCounter = document.getElementById("surprise-counter");
+const surpriseMemo = document.getElementById("surprise-memo");
 const eventsBody = document.querySelector("#events-table tbody");
-const addEventRowBtn = document.getElementById("add-event-row");
 const strengthBody = document.querySelector("#strength-matrix tbody");
-const exportBtn = document.getElementById("export-btn");
-const saveStatus = document.getElementById("save-status");
-const dataSourceNotice = document.getElementById("data-source-notice");
 const strengthSuggestion = document.getElementById("strength-suggestion");
+const scenarioBias = document.getElementById("scenario-bias");
+const scenarioReason = document.getElementById("scenario-reason");
+const scenarioBreakdown = document.getElementById("scenario-breakdown");
+
+const exportBtn = document.getElementById("export-btn");
+const actionStatus = document.getElementById("action-status");
 
 const crossPairDetails = document.getElementById("cross-pair-details");
 const cpPairName = document.getElementById("cp-pair-name");
@@ -30,7 +37,7 @@ const cpBias = document.getElementById("cp-bias");
 const cpReason = document.getElementById("cp-reason");
 const cpBreakdown = document.getElementById("cp-breakdown");
 
-let currentCrossPair = null;
+let currentData = null;
 
 function todayStr() {
   const d = new Date();
@@ -40,94 +47,69 @@ function todayStr() {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-function storageKey(dateStr) {
-  return `fxcheck_${dateStr}`;
+const SCORE_LABELS = { "1": "+1", "0": "0", "-1": "-1", "": "未設定" };
+const SELECT_LABELS = {
+  risk_sentiment: { on: "リスクオン", off: "リスクオフ", neutral: "中立" },
+  rate_diff_change: { widen: "拡大", narrow: "縮小", flat: "不変" },
+  cb_tone_change: { hawkish: "タカ派寄り", dovish: "ハト派寄り", flat: "不変" },
+  surprise_usd: { strong: "強い（上振れ傾向）", weak: "弱い（下振れ傾向）", mixed: "混在" },
+  surprise_counter: { strong: "強い（上振れ傾向）", weak: "弱い（下振れ傾向）", mixed: "混在" },
+};
+
+function label(field, value) {
+  if (!value) return "";
+  return (SELECT_LABELS[field] && SELECT_LABELS[field][value]) || value;
 }
 
-function makeSelect(options) {
-  const select = document.createElement("select");
-  for (const opt of options) {
-    const o = document.createElement("option");
-    o.value = opt.value;
-    o.textContent = opt.label;
-    select.appendChild(o);
+function renderEventsTable(events = []) {
+  eventsBody.innerHTML = "";
+  for (const ev of events) {
+    const tr = document.createElement("tr");
+    for (const f of ["time", "indicator", "forecast", "previous", "up", "down"]) {
+      const td = document.createElement("td");
+      td.textContent = ev[f] || "";
+      tr.appendChild(td);
+    }
+    eventsBody.appendChild(tr);
   }
-  return select;
 }
 
-function createEventRow(rowData = {}) {
-  const tr = document.createElement("tr");
-  const fields = ["time", "indicator", "forecast", "previous", "up", "down"];
-  for (const f of fields) {
-    const td = document.createElement("td");
-    const input = document.createElement("input");
-    input.type = "text";
-    input.dataset.field = f;
-    input.value = rowData[f] || "";
-    td.appendChild(input);
-    tr.appendChild(td);
+function renderStrengthMatrix(strength = {}) {
+  strengthBody.innerHTML = "";
+  for (const cur of CURRENCIES) {
+    const entry = strength[cur] || {};
+    const tr = document.createElement("tr");
+
+    const tdCur = document.createElement("td");
+    tdCur.textContent = cur;
+    tr.appendChild(tdCur);
+
+    let total = 0;
+    for (const f of ["policy", "data", "risk"]) {
+      const td = document.createElement("td");
+      td.textContent = SCORE_LABELS[entry[f]] || SCORE_LABELS[""];
+      tr.appendChild(td);
+      const v = parseInt(entry[f], 10);
+      if (!isNaN(v)) total += v;
+    }
+
+    const tdTotal = document.createElement("td");
+    tdTotal.textContent = total > 0 ? `+${total}` : `${total}`;
+    tr.appendChild(tdTotal);
+
+    strengthBody.appendChild(tr);
   }
-  const tdRemove = document.createElement("td");
-  const removeBtn = document.createElement("button");
-  removeBtn.type = "button";
-  removeBtn.textContent = "削除";
-  removeBtn.className = "row-remove";
-  removeBtn.addEventListener("click", () => {
-    tr.remove();
-    saveCurrentData();
-  });
-  tdRemove.appendChild(removeBtn);
-  tr.appendChild(tdRemove);
-  return tr;
+  updateStrengthSuggestion(strength);
 }
 
-function createStrengthRow(currency, rowData = {}) {
-  const tr = document.createElement("tr");
-  tr.dataset.currency = currency;
-
-  const tdCur = document.createElement("td");
-  tdCur.textContent = currency;
-  tr.appendChild(tdCur);
-
-  const fields = ["policy", "data", "risk"];
-  for (const f of fields) {
-    const td = document.createElement("td");
-    const select = makeSelect(SCORE_OPTIONS);
-    select.dataset.field = f;
-    select.value = rowData[f] || "";
-    select.addEventListener("change", () => {
-      recalcTotal(tr);
-      updateStrengthSuggestion();
-      saveCurrentData();
-    });
-    td.appendChild(select);
-    tr.appendChild(td);
-  }
-
-  const tdTotal = document.createElement("td");
-  tdTotal.className = "total-cell";
-  tdTotal.textContent = "0";
-  tr.appendChild(tdTotal);
-
-  recalcTotal(tr);
-  return tr;
-}
-
-function recalcTotal(tr) {
-  const selects = tr.querySelectorAll("select");
-  let total = 0;
-  selects.forEach((s) => {
-    const v = parseInt(s.value, 10);
-    if (!isNaN(v)) total += v;
-  });
-  tr.querySelector(".total-cell").textContent = total;
-}
-
-function updateStrengthSuggestion() {
-  const totals = [];
-  strengthBody.querySelectorAll("tr").forEach((tr) => {
-    const total = parseInt(tr.querySelector(".total-cell").textContent, 10) || 0;
-    totals.push({ currency: tr.dataset.currency, total });
+function updateStrengthSuggestion(strength = {}) {
+  const totals = CURRENCIES.map((cur) => {
+    const entry = strength[cur] || {};
+    const total = ["policy", "data", "risk"].reduce((sum, f) => {
+      const v = parseInt(entry[f], 10);
+      return sum + (isNaN(v) ? 0 : v);
+    }, 0);
+    return { currency: cur, total };
   });
 
   const allZero = totals.every((t) => t.total === 0);
@@ -146,54 +128,6 @@ function updateStrengthSuggestion() {
     `<strong>本日の強弱:</strong> 強い ＝ ${strong.join("・")}（${max >= 0 ? "+" + max : max}） / ` +
     `弱い ＝ ${weak.join("・")}（${min >= 0 ? "+" + min : min}）<br>` +
     `→ 強い通貨を買い・弱い通貨を売る組み合わせ（例：${strong[0]}/${weak[0]} や ${weak[0]}/${strong[0]}）が、本日トレンドが出やすいペアの目安です。`;
-}
-
-function buildStrengthMatrix(data = {}) {
-  strengthBody.innerHTML = "";
-  for (const cur of CURRENCIES) {
-    const rowData = (data.strength && data.strength[cur]) || {};
-    strengthBody.appendChild(createStrengthRow(cur, rowData));
-  }
-  updateStrengthSuggestion();
-}
-
-function buildEventsTable(events = []) {
-  eventsBody.innerHTML = "";
-  const rows = events.length ? events : [{}, {}];
-  for (const ev of rows) {
-    eventsBody.appendChild(createEventRow(ev));
-  }
-}
-
-function collectFormData() {
-  const data = {};
-  for (const el of form.elements) {
-    if (!el.name) continue;
-    data[el.name] = el.value;
-  }
-
-  data.events = [];
-  eventsBody.querySelectorAll("tr").forEach((tr) => {
-    const ev = {};
-    tr.querySelectorAll("input").forEach((input) => {
-      ev[input.dataset.field] = input.value;
-    });
-    if (Object.values(ev).some((v) => v)) data.events.push(ev);
-  });
-
-  data.strength = {};
-  strengthBody.querySelectorAll("tr").forEach((tr) => {
-    const cur = tr.dataset.currency;
-    const entry = {};
-    tr.querySelectorAll("select").forEach((s) => {
-      entry[s.dataset.field] = s.value;
-    });
-    data.strength[cur] = entry;
-  });
-
-  data.cross_pair = currentCrossPair;
-
-  return data;
 }
 
 function renderCrossPair(crossPair) {
@@ -226,76 +160,54 @@ function renderCrossPair(crossPair) {
   }
 }
 
-function populateForm(data = {}) {
-  for (const el of form.elements) {
-    if (!el.name) continue;
-    el.value = data[el.name] || "";
-  }
-  buildEventsTable(data.events || []);
-  buildStrengthMatrix(data);
-  currentCrossPair = data.cross_pair || null;
-  renderCrossPair(currentCrossPair);
+function renderChecklist(data) {
+  riskSentiment.textContent = label("risk_sentiment", data.risk_sentiment);
+  usdFlowMemo.textContent = data.usd_flow_memo || "";
+  counterFlowMemo.textContent = data.counter_flow_memo || "";
+  rateDiffChange.textContent = label("rate_diff_change", data.rate_diff_change);
+  cbToneChange.textContent = label("cb_tone_change", data.cb_tone_change);
+  rateDiffMemo.textContent = data.rate_diff_memo || "";
+  surpriseUsd.textContent = label("surprise_usd", data.surprise_usd);
+  surpriseCounter.textContent = label("surprise_counter", data.surprise_counter);
+  surpriseMemo.textContent = data.surprise_memo || "";
+  scenarioBias.textContent = data.scenario_bias || "";
+  scenarioReason.textContent = data.scenario_reason || "";
+  scenarioBreakdown.textContent = data.scenario_breakdown || "";
+
+  renderEventsTable(data.events || []);
+  renderStrengthMatrix(data.strength || {});
 }
 
 async function loadDate(dateStr) {
   datePicker.value = dateStr;
-  const raw = localStorage.getItem(storageKey(dateStr));
-  if (raw) {
-    populateForm(JSON.parse(raw));
-    saveStatus.textContent = "保存済みデータを読み込みました";
-    dataSourceNotice.hidden = true;
-    return;
-  }
+  actionStatus.textContent = "";
 
   try {
     const res = await fetch(`data/${dateStr}.json`);
     if (res.ok) {
       const data = await res.json();
-      populateForm(data);
-      saveStatus.textContent = "新規（未保存）";
-      dataSourceNotice.hidden = false;
-      dataSourceNotice.textContent =
-        "AIが下調べした「たたき台」を表示しています。内容を確認・編集して、自分の判断で確定させてください。編集すると自動保存されます。";
+      currentData = data;
+      checklistContent.hidden = false;
+      noDataNotice.hidden = true;
+      renderChecklist(data);
+      renderCrossPair(data.cross_pair || null);
       return;
     }
   } catch (e) {
-    // データファイルがない場合は無視して空フォームを表示
+    // データファイルがない場合は下の「データなし」表示にフォールバック
   }
 
-  populateForm({});
-  saveStatus.textContent = "新規（未保存）";
-  dataSourceNotice.hidden = true;
-}
-
-let saveTimer = null;
-function saveCurrentData() {
-  dataSourceNotice.hidden = true;
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    const dateStr = datePicker.value || todayStr();
-    const data = collectFormData();
-    localStorage.setItem(storageKey(dateStr), JSON.stringify(data));
-    saveStatus.textContent = `保存しました (${new Date().toLocaleTimeString("ja-JP")})`;
-  }, 300);
-}
-
-const SCORE_LABELS = { "1": "+1", "0": "0", "-1": "-1", "": "未設定" };
-const SELECT_LABELS = {
-  risk_sentiment: { on: "リスクオン", off: "リスクオフ", neutral: "中立" },
-  rate_diff_change: { widen: "拡大", narrow: "縮小", flat: "不変" },
-  cb_tone_change: { hawkish: "タカ派寄り", dovish: "ハト派寄り", flat: "不変" },
-  surprise_usd: { strong: "強い（上振れ傾向）", weak: "弱い（下振れ傾向）", mixed: "混在" },
-  surprise_counter: { strong: "強い（上振れ傾向）", weak: "弱い（下振れ傾向）", mixed: "混在" },
-};
-
-function label(field, value) {
-  if (!value) return "";
-  return (SELECT_LABELS[field] && SELECT_LABELS[field][value]) || value;
+  currentData = null;
+  checklistContent.hidden = true;
+  noDataNotice.hidden = false;
+  renderCrossPair(null);
 }
 
 function buildMarkdown() {
-  const data = collectFormData();
+  const data = currentData || {};
   const dateStr = datePicker.value || todayStr();
+  const events = data.events || [];
+  const strength = data.strength || {};
 
   let md = `# FXファンダ デイリーチェック\n\n`;
   md += `日付：${dateStr}\n対象ペア：\n\n---\n\n`;
@@ -320,7 +232,7 @@ function buildMarkdown() {
   md += `## 5. 本日のイベント・指標\n\n`;
   md += `| 時間（日本時間） | 指標 / イベント | 予想 | 前回 | 上振れた場合 | 下振れた場合 |\n`;
   md += `|---|---|---|---|---|---|\n`;
-  for (const ev of data.events) {
+  for (const ev of events) {
     md += `| ${ev.time || ""} | ${ev.indicator || ""} | ${ev.forecast || ""} | ${ev.previous || ""} | ${ev.up || ""} | ${ev.down || ""} |\n`;
   }
   md += `\n---\n\n`;
@@ -329,7 +241,7 @@ function buildMarkdown() {
   md += `| 通貨 | 金融政策 | 経済データ | リスク相性 | 合計 |\n`;
   md += `|---|---|---|---|---|\n`;
   for (const cur of CURRENCIES) {
-    const s = data.strength[cur] || {};
+    const s = strength[cur] || {};
     const total =
       (parseInt(s.policy, 10) || 0) + (parseInt(s.data, 10) || 0) + (parseInt(s.risk, 10) || 0);
     md += `| ${cur} | ${SCORE_LABELS[s.policy] || ""} | ${SCORE_LABELS[s.data] || ""} | ${SCORE_LABELS[s.risk] || ""} | ${total} |\n`;
@@ -352,20 +264,13 @@ todayBtn.addEventListener("click", () => {
   loadDate(todayStr());
 });
 
-addEventRowBtn.addEventListener("click", () => {
-  eventsBody.appendChild(createEventRow());
-});
-
-form.addEventListener("input", saveCurrentData);
-form.addEventListener("change", saveCurrentData);
-
 exportBtn.addEventListener("click", async () => {
   const md = buildMarkdown();
   try {
     await navigator.clipboard.writeText(md);
-    saveStatus.textContent = "Markdownをコピーしました";
+    actionStatus.textContent = "Markdownをコピーしました";
   } catch (e) {
-    saveStatus.textContent = "コピーに失敗しました（手動で選択してください）";
+    actionStatus.textContent = "コピーに失敗しました（手動で選択してください）";
   }
 });
 

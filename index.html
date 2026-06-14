@@ -106,80 +106,37 @@
     </details>
   </section>
 
-  <!-- ============ デイリーチェック（手入力） ============ -->
+  <!-- ============ デイリーチェック（AI下調べ） ============ -->
   <section class="checklist">
     <h2>デイリーチェック</h2>
-    <p class="hint">各項目の考え方は Obsidian の「FXファンダ_方向感フレームワーク」を参照。</p>
-    <p id="data-source-notice" class="notice" hidden></p>
+    <p class="hint">各項目の考え方は Obsidian の「FXファンダ_方向感フレームワーク」を参照。内容はAIによる当日の下調べです。最終判断は自分で。</p>
+    <p id="no-data-notice" class="notice" hidden>この日のAI下調べデータはまだありません。</p>
 
-    <form id="checklist-form">
+    <div id="checklist-content">
 
       <details open>
         <summary>1. ドル全体の流れ</summary>
-        <label>リスク姿勢
-          <select name="risk_sentiment">
-            <option value="">--</option>
-            <option value="on">リスクオン</option>
-            <option value="off">リスクオフ</option>
-            <option value="neutral">中立</option>
-          </select>
-        </label>
-        <label>メモ（DXY・米10年債利回り・米株の見た所感）
-          <textarea name="usd_flow_memo" rows="3"></textarea>
-        </label>
+        <p><strong>リスク姿勢：</strong><span id="risk-sentiment"></span></p>
+        <p id="usd-flow-memo"></p>
       </details>
 
-      <details>
+      <details open>
         <summary>2. 相手通貨側の流れ</summary>
-        <label>中銀スタンス・関連市場メモ
-          <textarea name="counter_flow_memo" rows="3"></textarea>
-        </label>
+        <p id="counter-flow-memo"></p>
       </details>
 
-      <details>
+      <details open>
         <summary>3. 金利差の方向性</summary>
-        <label>直近の変化
-          <select name="rate_diff_change">
-            <option value="">--</option>
-            <option value="widen">拡大</option>
-            <option value="narrow">縮小</option>
-            <option value="flat">不変</option>
-          </select>
-        </label>
-        <label>中銀トーンの変化
-          <select name="cb_tone_change">
-            <option value="">--</option>
-            <option value="hawkish">タカ派寄り</option>
-            <option value="dovish">ハト派寄り</option>
-            <option value="flat">不変</option>
-          </select>
-        </label>
-        <label>メモ
-          <textarea name="rate_diff_memo" rows="2"></textarea>
-        </label>
+        <p><strong>直近の変化：</strong><span id="rate-diff-change"></span></p>
+        <p><strong>中銀トーンの変化：</strong><span id="cb-tone-change"></span></p>
+        <p id="rate-diff-memo"></p>
       </details>
 
-      <details>
+      <details open>
         <summary>4. 経済サプライズの傾向</summary>
-        <label>ドル側
-          <select name="surprise_usd">
-            <option value="">--</option>
-            <option value="strong">強い（上振れ傾向）</option>
-            <option value="weak">弱い（下振れ傾向）</option>
-            <option value="mixed">混在</option>
-          </select>
-        </label>
-        <label>相手通貨側
-          <select name="surprise_counter">
-            <option value="">--</option>
-            <option value="strong">強い（上振れ傾向）</option>
-            <option value="weak">弱い（下振れ傾向）</option>
-            <option value="mixed">混在</option>
-          </select>
-        </label>
-        <label>メモ
-          <textarea name="surprise_memo" rows="2"></textarea>
-        </label>
+        <p><strong>ドル側：</strong><span id="surprise-usd"></span></p>
+        <p><strong>相手通貨側：</strong><span id="surprise-counter"></span></p>
+        <p id="surprise-memo"></p>
       </details>
 
       <details>
@@ -188,19 +145,18 @@
           <table id="events-table">
             <thead>
               <tr>
-                <th>時間(JST)</th><th>指標/イベント</th><th>予想</th><th>前回</th><th>上振れた場合</th><th>下振れた場合</th><th></th>
+                <th>時間(JST)</th><th>指標/イベント</th><th>予想</th><th>前回</th><th>上振れた場合</th><th>下振れた場合</th>
               </tr>
             </thead>
             <tbody></tbody>
           </table>
         </div>
-        <button type="button" id="add-event-row">+ 行を追加</button>
       </details>
 
       <details>
         <summary>通貨強弱マトリクス</summary>
         <p class="hint">
-          各通貨について3つの軸を+1（プラス材料）/0（中立）/-1（マイナス材料）で評価します。<br>
+          各通貨について3つの軸を+1（プラス材料）/0（中立）/-1（マイナス材料）で評価しています。<br>
           ・金融政策：中銀がタカ派寄り(+1)かハト派寄り(-1)か<br>
           ・経済データ：最近の指標が強い(+1)か弱い(-1)か<br>
           ・リスク相性：今日のリスク姿勢（オン/オフ）でこの通貨が買われやすい(+1)か売られやすい(-1)か<br>
@@ -219,7 +175,7 @@
 
       <details id="cross-pair-details" hidden>
         <summary>おすすめペアの簡易チェック: <span id="cp-pair-name"></span></summary>
-        <p class="hint">通貨強弱マトリクスで強い／弱いとされた組み合わせについて、上の5項目と同じ視点でAIが当日リサーチした内容です（編集はできません）。</p>
+        <p class="hint">通貨強弱マトリクスで強い／弱いとされた組み合わせについて、上の5項目と同じ視点でAIが当日リサーチした内容です。</p>
 
         <h3>1. <span id="cp-base-name"></span>側の流れ</h3>
         <p id="cp-base-memo"></p>
@@ -251,22 +207,16 @@
 
       <details open>
         <summary>今日のシナリオ</summary>
-        <label>バイアス
-          <textarea name="scenario_bias" rows="2"></textarea>
-        </label>
-        <label>根拠
-          <textarea name="scenario_reason" rows="2"></textarea>
-        </label>
-        <label>崩れる条件
-          <textarea name="scenario_breakdown" rows="2"></textarea>
-        </label>
+        <p><strong>バイアス：</strong><span id="scenario-bias"></span></p>
+        <p><strong>根拠：</strong><span id="scenario-reason"></span></p>
+        <p><strong>崩れる条件：</strong><span id="scenario-breakdown"></span></p>
       </details>
 
-    </form>
+    </div>
 
     <div class="actions">
       <button type="button" id="export-btn">Markdownをコピー</button>
-      <span id="save-status"></span>
+      <span id="action-status"></span>
     </div>
   </section>
 
