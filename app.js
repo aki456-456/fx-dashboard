@@ -17,6 +17,21 @@ const saveStatus = document.getElementById("save-status");
 const dataSourceNotice = document.getElementById("data-source-notice");
 const strengthSuggestion = document.getElementById("strength-suggestion");
 
+const crossPairDetails = document.getElementById("cross-pair-details");
+const cpPairName = document.getElementById("cp-pair-name");
+const cpBaseName = document.getElementById("cp-base-name");
+const cpQuoteName = document.getElementById("cp-quote-name");
+const cpBaseMemo = document.getElementById("cp-base-memo");
+const cpQuoteMemo = document.getElementById("cp-quote-memo");
+const cpRateMemo = document.getElementById("cp-rate-memo");
+const cpSurpriseMemo = document.getElementById("cp-surprise-memo");
+const cpEventsBody = document.querySelector("#cp-events-table tbody");
+const cpBias = document.getElementById("cp-bias");
+const cpReason = document.getElementById("cp-reason");
+const cpBreakdown = document.getElementById("cp-breakdown");
+
+let currentCrossPair = null;
+
 function todayStr() {
   const d = new Date();
   const yyyy = d.getFullYear();
@@ -176,7 +191,39 @@ function collectFormData() {
     data.strength[cur] = entry;
   });
 
+  data.cross_pair = currentCrossPair;
+
   return data;
+}
+
+function renderCrossPair(crossPair) {
+  if (!crossPair) {
+    crossPairDetails.hidden = true;
+    return;
+  }
+
+  crossPairDetails.hidden = false;
+  cpPairName.textContent = crossPair.pair || "";
+  cpBaseName.textContent = crossPair.base || "";
+  cpQuoteName.textContent = crossPair.quote || "";
+  cpBaseMemo.textContent = crossPair.base_flow_memo || "";
+  cpQuoteMemo.textContent = crossPair.quote_flow_memo || "";
+  cpRateMemo.textContent = crossPair.rate_diff_memo || "";
+  cpSurpriseMemo.textContent = crossPair.surprise_memo || "";
+  cpBias.textContent = crossPair.scenario_bias || "";
+  cpReason.textContent = crossPair.scenario_reason || "";
+  cpBreakdown.textContent = crossPair.scenario_breakdown || "";
+
+  cpEventsBody.innerHTML = "";
+  for (const ev of crossPair.events || []) {
+    const tr = document.createElement("tr");
+    for (const f of ["time", "indicator", "forecast", "previous", "up", "down"]) {
+      const td = document.createElement("td");
+      td.textContent = ev[f] || "";
+      tr.appendChild(td);
+    }
+    cpEventsBody.appendChild(tr);
+  }
 }
 
 function populateForm(data = {}) {
@@ -186,6 +233,8 @@ function populateForm(data = {}) {
   }
   buildEventsTable(data.events || []);
   buildStrengthMatrix(data);
+  currentCrossPair = data.cross_pair || null;
+  renderCrossPair(currentCrossPair);
 }
 
 async function loadDate(dateStr) {

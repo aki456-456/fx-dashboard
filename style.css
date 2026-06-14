@@ -116,6 +116,29 @@ summary {
   padding: 4px 0;
 }
 
+details h3 {
+  font-size: 0.9rem;
+  margin: 14px 0 4px;
+  color: var(--accent);
+}
+
+details h3:first-of-type {
+  margin-top: 10px;
+}
+
+details p {
+  margin: 4px 0;
+  font-size: 0.9rem;
+}
+
+#cp-events-table th,
+#cp-events-table td {
+  white-space: normal;
+  min-width: 120px;
+  vertical-align: top;
+  font-size: 0.8rem;
+}
+
 label {
   display: block;
   margin-top: 10px;

@@ -217,6 +217,38 @@
         <p id="strength-suggestion" class="notice" hidden></p>
       </details>
 
+      <details id="cross-pair-details" hidden>
+        <summary>おすすめペアの簡易チェック: <span id="cp-pair-name"></span></summary>
+        <p class="hint">通貨強弱マトリクスで強い／弱いとされた組み合わせについて、上の5項目と同じ視点でAIが当日リサーチした内容です（編集はできません）。</p>
+
+        <h3>1. <span id="cp-base-name"></span>側の流れ</h3>
+        <p id="cp-base-memo"></p>
+
+        <h3>2. <span id="cp-quote-name"></span>側の流れ</h3>
+        <p id="cp-quote-memo"></p>
+
+        <h3>3. 金利差の方向性</h3>
+        <p id="cp-rate-memo"></p>
+
+        <h3>4. 経済サプライズの傾向</h3>
+        <p id="cp-surprise-memo"></p>
+
+        <h3>5. 関連イベント</h3>
+        <div class="table-scroll">
+          <table id="cp-events-table">
+            <thead>
+              <tr><th>時間(JST)</th><th>指標/イベント</th><th>予想</th><th>前回</th><th>上振れた場合</th><th>下振れた場合</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <h3>今日のシナリオ</h3>
+        <p><strong>バイアス：</strong><span id="cp-bias"></span></p>
+        <p><strong>根拠：</strong><span id="cp-reason"></span></p>
+        <p><strong>崩れる条件：</strong><span id="cp-breakdown"></span></p>
+      </details>
+
       <details open>
         <summary>今日のシナリオ</summary>
         <label>バイアス
