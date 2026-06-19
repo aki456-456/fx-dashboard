@@ -141,14 +141,16 @@ details p {
   font-size: 0.8rem;
 }
 
-#date-select {
+.date-display {
   background: var(--bg);
   color: var(--text);
   border: 1px solid var(--border);
   border-radius: 6px;
-  padding: 8px;
-  font-size: 0.95rem;
+  padding: 8px 14px;
+  font-size: 1.25rem;
+  font-weight: 700;
   font-family: inherit;
+  cursor: pointer;
 }
 
 .last-updated {
@@ -157,6 +159,100 @@ details p {
   padding: 0 16px;
   color: var(--muted);
   font-size: 0.8rem;
+}
+
+.calendar-popup {
+  max-width: 320px;
+  margin: 8px auto 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.calendar-header button {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 4px 10px;
+}
+
+#cal-month-label {
+  font-weight: 600;
+}
+
+.calendar-weekdays,
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  text-align: center;
+}
+
+.calendar-weekdays {
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin-bottom: 4px;
+}
+
+.calendar-grid .cal-day {
+  padding: 8px 0;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.calendar-grid .cal-day.has-data {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.calendar-grid .cal-day.has-data:hover {
+  opacity: 0.85;
+}
+
+.calendar-grid .cal-day.no-data {
+  color: var(--muted);
+  cursor: default;
+  pointer-events: none;
+}
+
+.calendar-grid .cal-day.selected {
+  outline: 2px solid #fff;
+  outline-offset: -2px;
+}
+
+.calendar-legend {
+  margin: 8px 0 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-right: 2px;
+}
+
+.legend-dot.has-data {
+  background: var(--accent);
+}
+
+.legend-dot.no-data {
+  background: var(--border);
 }
 
 .table-scroll {

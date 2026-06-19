@@ -1,7 +1,12 @@
 const CURRENCIES = ["USD", "JPY", "EUR", "GBP", "AUD", "NZD", "CAD", "CHF"];
 
-const dateSelect = document.getElementById("date-select");
+const dateDisplayBtn = document.getElementById("date-display-btn");
 const todayBtn = document.getElementById("today-btn");
+const calendarPopup = document.getElementById("calendar-popup");
+const calPrevBtn = document.getElementById("cal-prev");
+const calNextBtn = document.getElementById("cal-next");
+const calMonthLabel = document.getElementById("cal-month-label");
+const calendarGrid = document.getElementById("calendar-grid");
 const lastUpdated = document.getElementById("last-updated");
 const noDataNotice = document.getElementById("no-data-notice");
 const checklistContent = document.getElementById("checklist-content");
@@ -40,6 +45,9 @@ const cpBreakdown = document.getElementById("cp-breakdown");
 
 let currentData = null;
 let availableDates = [];
+let selectedDateStr = null;
+let calendarYear = null;
+let calendarMonth = null; // 0-indexed
 
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
 
@@ -51,9 +59,13 @@ function todayStr() {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-function formatDateLabel(dateStr) {
+function dateKey(year, month, day) {
+  return `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function formatBigLabel(dateStr) {
   const d = new Date(`${dateStr}T00:00:00`);
-  return `${dateStr}(${WEEKDAYS[d.getDay()]})`;
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日（${WEEKDAYS[d.getDay()]}）`;
 }
 
 async function loadManifest() {
@@ -66,14 +78,48 @@ async function loadManifest() {
   } catch (e) {
     availableDates = [];
   }
+}
 
-  dateSelect.innerHTML = "";
-  for (const d of availableDates) {
-    const opt = document.createElement("option");
-    opt.value = d;
-    opt.textContent = formatDateLabel(d);
-    dateSelect.appendChild(opt);
+function renderCalendar(year, month) {
+  calendarYear = year;
+  calendarMonth = month;
+  calMonthLabel.textContent = `${year}年${month + 1}月`;
+  calendarGrid.innerHTML = "";
+
+  const firstWeekday = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  for (let i = 0; i < firstWeekday; i++) {
+    calendarGrid.appendChild(document.createElement("span"));
   }
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const key = dateKey(year, month, day);
+    const cell = document.createElement("span");
+    cell.className = "cal-day";
+    cell.textContent = String(day);
+
+    if (availableDates.includes(key)) {
+      cell.classList.add("has-data");
+      cell.addEventListener("click", () => {
+        loadDate(key);
+        calendarPopup.hidden = true;
+      });
+    } else {
+      cell.classList.add("no-data");
+    }
+
+    if (key === selectedDateStr) {
+      cell.classList.add("selected");
+    }
+
+    calendarGrid.appendChild(cell);
+  }
+}
+
+function openCalendarFor(dateStr) {
+  const d = new Date(`${dateStr}T00:00:00`);
+  renderCalendar(d.getFullYear(), d.getMonth());
 }
 
 const SCORE_LABELS = { "1": "+1", "0": "0", "-1": "-1", "": "未設定" };
@@ -208,8 +254,10 @@ function renderChecklist(data) {
 }
 
 async function loadDate(dateStr) {
-  if (availableDates.includes(dateStr)) {
-    dateSelect.value = dateStr;
+  selectedDateStr = dateStr;
+  dateDisplayBtn.textContent = formatBigLabel(dateStr);
+  if (!calendarPopup.hidden) {
+    renderCalendar(calendarYear, calendarMonth);
   }
   actionStatus.textContent = "";
 
@@ -239,7 +287,7 @@ async function loadDate(dateStr) {
 
 function buildMarkdown() {
   const data = currentData || {};
-  const dateStr = dateSelect.value || todayStr();
+  const dateStr = selectedDateStr || todayStr();
   const events = data.events || [];
   const strength = data.strength || {};
 
@@ -290,11 +338,47 @@ function buildMarkdown() {
   return md;
 }
 
-dateSelect.addEventListener("change", () => {
-  loadDate(dateSelect.value);
+dateDisplayBtn.addEventListener("click", () => {
+  if (calendarPopup.hidden) {
+    openCalendarFor(selectedDateStr || todayStr());
+    calendarPopup.hidden = false;
+  } else {
+    calendarPopup.hidden = true;
+  }
+});
+
+calPrevBtn.addEventListener("click", () => {
+  let year = calendarYear;
+  let month = calendarMonth - 1;
+  if (month < 0) {
+    month = 11;
+    year -= 1;
+  }
+  renderCalendar(year, month);
+});
+
+calNextBtn.addEventListener("click", () => {
+  let year = calendarYear;
+  let month = calendarMonth + 1;
+  if (month > 11) {
+    month = 0;
+    year += 1;
+  }
+  renderCalendar(year, month);
+});
+
+document.addEventListener("click", (e) => {
+  if (
+    !calendarPopup.hidden &&
+    !calendarPopup.contains(e.target) &&
+    e.target !== dateDisplayBtn
+  ) {
+    calendarPopup.hidden = true;
+  }
 });
 
 todayBtn.addEventListener("click", () => {
+  calendarPopup.hidden = true;
   loadDate(todayStr());
 });
 

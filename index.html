@@ -10,10 +10,24 @@
 <header>
   <h1>FXファンダ デイリーダッシュボード</h1>
   <div class="date-nav">
-    <select id="date-select"></select>
+    <button id="date-display-btn" type="button" class="date-display"></button>
     <button id="today-btn" type="button">今日</button>
   </div>
 </header>
+
+<div id="calendar-popup" class="calendar-popup" hidden>
+  <div class="calendar-header">
+    <button id="cal-prev" type="button" aria-label="前の月">◀</button>
+    <span id="cal-month-label"></span>
+    <button id="cal-next" type="button" aria-label="次の月">▶</button>
+  </div>
+  <div class="calendar-weekdays">
+    <span>日</span><span>月</span><span>火</span><span>水</span><span>木</span><span>金</span><span>土</span>
+  </div>
+  <div id="calendar-grid" class="calendar-grid"></div>
+  <p class="hint calendar-legend"><span class="legend-dot has-data"></span>データあり（タップで表示）　<span class="legend-dot no-data"></span>データなし</p>
+</div>
+
 <p id="last-updated" class="last-updated" hidden></p>
 
 <main>
