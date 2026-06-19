@@ -141,7 +141,7 @@ details p {
   font-size: 0.8rem;
 }
 
-input[type="date"] {
+#date-select {
   background: var(--bg);
   color: var(--text);
   border: 1px solid var(--border);
@@ -149,6 +149,14 @@ input[type="date"] {
   padding: 8px;
   font-size: 0.95rem;
   font-family: inherit;
+}
+
+.last-updated {
+  max-width: 900px;
+  margin: 8px auto 0;
+  padding: 0 16px;
+  color: var(--muted);
+  font-size: 0.8rem;
 }
 
 .table-scroll {

@@ -1,7 +1,8 @@
 const CURRENCIES = ["USD", "JPY", "EUR", "GBP", "AUD", "NZD", "CAD", "CHF"];
 
-const datePicker = document.getElementById("date-picker");
+const dateSelect = document.getElementById("date-select");
 const todayBtn = document.getElementById("today-btn");
+const lastUpdated = document.getElementById("last-updated");
 const noDataNotice = document.getElementById("no-data-notice");
 const checklistContent = document.getElementById("checklist-content");
 
@@ -38,6 +39,9 @@ const cpReason = document.getElementById("cp-reason");
 const cpBreakdown = document.getElementById("cp-breakdown");
 
 let currentData = null;
+let availableDates = [];
+
+const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
 
 function todayStr() {
   const d = new Date();
@@ -45,6 +49,31 @@ function todayStr() {
   const mm = String(d.getMonth() + 1).padStart(2, "0");
   const dd = String(d.getDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
+}
+
+function formatDateLabel(dateStr) {
+  const d = new Date(`${dateStr}T00:00:00`);
+  return `${dateStr}(${WEEKDAYS[d.getDay()]})`;
+}
+
+async function loadManifest() {
+  try {
+    const res = await fetch("data/manifest.json");
+    if (res.ok) {
+      const dates = await res.json();
+      availableDates = [...dates].sort().reverse();
+    }
+  } catch (e) {
+    availableDates = [];
+  }
+
+  dateSelect.innerHTML = "";
+  for (const d of availableDates) {
+    const opt = document.createElement("option");
+    opt.value = d;
+    opt.textContent = formatDateLabel(d);
+    dateSelect.appendChild(opt);
+  }
 }
 
 const SCORE_LABELS = { "1": "+1", "0": "0", "-1": "-1", "": "未設定" };
@@ -179,7 +208,9 @@ function renderChecklist(data) {
 }
 
 async function loadDate(dateStr) {
-  datePicker.value = dateStr;
+  if (availableDates.includes(dateStr)) {
+    dateSelect.value = dateStr;
+  }
   actionStatus.textContent = "";
 
   try {
@@ -189,6 +220,8 @@ async function loadDate(dateStr) {
       currentData = data;
       checklistContent.hidden = false;
       noDataNotice.hidden = true;
+      lastUpdated.hidden = false;
+      lastUpdated.textContent = `最終更新：${data.generated_at || dateStr}`;
       renderChecklist(data);
       renderCrossPair(data.cross_pair || null);
       return;
@@ -200,12 +233,13 @@ async function loadDate(dateStr) {
   currentData = null;
   checklistContent.hidden = true;
   noDataNotice.hidden = false;
+  lastUpdated.hidden = true;
   renderCrossPair(null);
 }
 
 function buildMarkdown() {
   const data = currentData || {};
-  const dateStr = datePicker.value || todayStr();
+  const dateStr = dateSelect.value || todayStr();
   const events = data.events || [];
   const strength = data.strength || {};
 
@@ -256,8 +290,8 @@ function buildMarkdown() {
   return md;
 }
 
-datePicker.addEventListener("change", () => {
-  loadDate(datePicker.value);
+dateSelect.addEventListener("change", () => {
+  loadDate(dateSelect.value);
 });
 
 todayBtn.addEventListener("click", () => {
@@ -274,4 +308,7 @@ exportBtn.addEventListener("click", async () => {
   }
 });
 
-loadDate(todayStr());
+(async () => {
+  await loadManifest();
+  loadDate(todayStr());
+})();
